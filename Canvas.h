@@ -1,5 +1,5 @@
 #pragma once
 
-class canvas {
+class Canvas {
 
 };

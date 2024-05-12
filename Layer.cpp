@@ -1,16 +1,18 @@
-#include "layer.h"
+#include "Layer.h"
 
-sf::Uint8 *layer::as_u8() {
+sf::Uint8 *Layer::as_u8() {
     return pixels;
 }
 
-layer::layer(unsigned int w, unsigned int h) {
+Layer::Layer(unsigned int w, unsigned int h) {
     width = w;
     height = h;
     pixels = new sf::Uint8[4*w*h]();
+    texture = new sf::Texture();
+    texture->create(width, height);
 }
 
-layer::layer(unsigned int w, unsigned int h, const pixel &p) {
+Layer::Layer(unsigned int w, unsigned int h, const Pixel &p) {
     width = w;
     height = h;
     pixels = new sf::Uint8[4*w*h];
@@ -20,10 +22,12 @@ layer::layer(unsigned int w, unsigned int h, const pixel &p) {
         pixels[i+2] = p.blue;
         pixels[i+3] = p.alpha;
     }
+    texture = new sf::Texture();
+    texture->create(width, height);
 }
 
 // this method doesn't quite work with some alpha values but looks ok
-void layer::applyVerticalGradient(const pixel& p) {
+void Layer::applyVerticalGradient(const Pixel& p) {
     float normalR = (float)p.red/255.0f;
     float normalG = (float)p.green/255.0f;
     float normalB = (float)p.blue/255.0f;
@@ -38,7 +42,7 @@ void layer::applyVerticalGradient(const pixel& p) {
     }
 }
 
-void layer::randomize() {
+void Layer::randomize() {
     std::random_device rd;
     std::mt19937 rand(rd());
     std::uniform_int_distribution<unsigned char> dist(0,255);
@@ -50,8 +54,8 @@ void layer::randomize() {
     }
 }
 
-void layer::ring() {
-    // color of a pixel is based on (h/2-y) / (w/2 - x) for x != w/2, (h/2-y) otherwise?
+void Layer::ring() {
+    // color of a Pixel is based on (h/2-y) / (w/2 - x) for x != w/2, (h/2-y) otherwise?
     int x = 0;
     int y = 0;
     for (int i = 0; i < 4 * width * height; i += 4){
@@ -79,12 +83,12 @@ void layer::ring() {
 //        unsigned char green = (unsigned char)(127.0 + std::sin(theta+2.0*std::numbers::pi/3.0)*127.0);
 //        unsigned char blue = (unsigned char)(127.0 + std::sin(theta+4.0*std::numbers::pi/3.0)*127.0);
 
-//        double colR = 0.5 + 0.5*std::sin(theta);
-//        double colG = 0.5 + 0.5*std::sin(theta+2.0*std::numbers::pi/3.0);
-//        double colB = 0.5 + 0.5*std::sin(theta+4.0*std::numbers::pi/3.0);
-        double colR = std::max(std::sin(theta), 0.0);
-        double colG = std::max(std::sin(theta + 2.0*std::numbers::pi/3.0), 0.0);
-        double colB = std::max(std::sin(theta + 4.0*std::numbers::pi/3.0), 0.0);
+        double colR = 0.5 + 0.5*std::sin(theta);
+        double colG = 0.5 + 0.5*std::sin(theta+2.0*std::numbers::pi/3.0);
+        double colB = 0.5 + 0.5*std::sin(theta+4.0*std::numbers::pi/3.0);
+//        double colR = std::max(std::sin(theta), 0.0);
+//        double colG = std::max(std::sin(theta + 2.0*std::numbers::pi/3.0), 0.0);
+//        double colB = std::max(std::sin(theta + 4.0*std::numbers::pi/3.0), 0.0);
         unsigned char red = (unsigned char)(255*colR);
         unsigned char green = (unsigned char)(255*colG);
         unsigned char blue = (unsigned char)(255*colB);
@@ -97,4 +101,30 @@ void layer::ring() {
 
     }
 
+}
+
+sf::Sprite* Layer::as_Sprite() {
+//    sf::Image image;
+//    image.create(800, 800, pixels);
+    texture->update(pixels);
+    auto* sprite = new sf::Sprite(*texture);
+    return sprite;
+}
+
+Layer::Layer() {
+    width = 800;
+    height = 800;
+    pixels = new sf::Uint8[4*width*height];
+    texture = new sf::Texture();
+    texture->create(width, height);
+}
+
+void Layer::drawPixel(const Pixel &p, int x, int y) {
+    if (x >= 0 && y >= 0 && x < width && y < height){
+        int offset = 4*((int)width*y+x);
+        pixels[offset] = p.red;
+        pixels[offset+1] = p.green;
+        pixels[offset+2] = p.blue;
+        pixels[offset+3] = p.alpha;
+    }
 }
