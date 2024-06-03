@@ -2,6 +2,11 @@
 #include "Pixel.h"
 #include <random>
 #include <numbers>
+
+struct Brush{
+    std::vector<std::pair<int,int>> offsets;
+    double r;
+};
 class Layer {
     unsigned int width;
     unsigned int height;
@@ -18,4 +23,9 @@ public:
     void randomize();
     void ring();
     void drawPixel(const Pixel& p, int x, int y);
+
+    void drawWithBrush(const Pixel &p, int x, int y, Brush &brush);
+    void drawLine(const Pixel &p, int x1, int y1, int x2, int y2, Brush &brush);
+
+    void bucket(const Pixel &p, int x, int y);
 };

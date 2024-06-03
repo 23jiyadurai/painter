@@ -128,3 +128,58 @@ void Layer::drawPixel(const Pixel &p, int x, int y) {
         pixels[offset+3] = p.alpha;
     }
 }
+
+void Layer::drawWithBrush(const Pixel &p, int x, int y, Brush &brush){
+    for (auto v : brush.offsets){
+        drawPixel(p, x+v.first, y+v.second);
+    }
+}
+
+void Layer::bucket(const Pixel &p, int x, int y){
+    if (x >= 0 && y >= 0 && x < width && y < height){
+        int offset = 4*((int)width*y+x);
+        pixels[offset] = p.red;
+        pixels[offset+1] = p.green;
+        pixels[offset+2] = p.blue;
+        pixels[offset+3] = p.alpha;
+    }
+}
+
+void Layer::drawLine(const Pixel &p, int x1, int y1, int x2, int y2, Brush &brush) {
+    // if the calculation of slope will result in a division by 0
+    if (x1 == x2){
+        for (int i = std::min(y1,y2); i <= std::max(y1,y2); i++){
+            drawWithBrush(p, x1, y1, brush);
+        }
+        return;
+    }
+    double slope = (double)(y2 - y1) / (x2 - x1);
+    if (x2 < x1){
+        std::swap(x1, x2);
+        std::swap(y1,y2);
+
+    }
+    double xPos = x1;
+    double yPos = y1;
+    // if the slope is normal-ish
+    if (std::abs(slope) < 2.0){
+        while (xPos < x2){
+            xPos++;
+            yPos += slope;
+            drawWithBrush(p, (int)xPos, (int)yPos, brush);
+        }
+    }
+    else {
+        slope = 1.0/slope;
+        if (yPos > y2){
+            yPos = y2;
+            y2 = y1;
+        }
+        while (yPos < y2){
+            yPos += 1;
+            xPos += slope;
+            drawWithBrush(p, (int)xPos, (int)yPos, brush);
+        }
+    }
+
+}
