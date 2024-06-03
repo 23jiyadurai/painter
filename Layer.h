@@ -23,6 +23,7 @@ public:
     void randomize();
     void ring();
     void drawPixel(const Pixel& p, int x, int y);
+    void clear(const Pixel& p);
 
     void drawWithBrush(const Pixel &p, int x, int y, Brush &brush);
     void drawLine(const Pixel &p, int x1, int y1, int x2, int y2, Brush &brush);

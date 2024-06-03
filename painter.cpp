@@ -78,6 +78,9 @@ int main(){
                         case sf::Keyboard::Z:
                             q = Pixel((unsigned int)(q)+256+256*256+256*256*256);
                             break;
+                        case sf::Keyboard::C:
+                            l.clear(p);
+                            break;
                         default:
                             break;
                     }

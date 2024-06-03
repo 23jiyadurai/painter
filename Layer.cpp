@@ -183,3 +183,17 @@ void Layer::drawLine(const Pixel &p, int x1, int y1, int x2, int y2, Brush &brus
     }
 
 }
+
+void Layer::clear(const Pixel &p) {
+    delete[] pixels;
+    pixels = new sf::Uint8[4*width*height];
+    for (int i = 0; i < 4 * width * height; i += 4){
+        pixels[i] = p.red;
+        pixels[i+1] = p.green;
+        pixels[i+2] = p.blue;
+        pixels[i+3] = p.alpha;
+    }
+    delete texture;
+    texture = new sf::Texture();
+    texture->create(width, height);
+}
