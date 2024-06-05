@@ -36,6 +36,7 @@ int main(){
     Brush brush2 = {{{-1,0}, {0,-1}, {0,0}, {1,0}, {0,1}}, 1};
     Brush brush3 = {{{-1,-1}, {-1,1}, {0,0}, {1,-1}, {1,1}}, 1};
     Brush brush1 = {{{0,0}}, 0.5};
+    Brush brush4 = {{{-1,-1}, {-1,0}, {0,-1}, {0,0}}, 1};
     auto brushes = {brush1, brush2, brush3};
     bool clicking = false;
     Brush* currentBrush = &brush1;
@@ -75,11 +76,20 @@ int main(){
                         case sf::Keyboard::Num3:
                             currentBrush = &brush3;
                             break;
+                        case sf::Keyboard::Num4:
+                            currentBrush = &brush4;
+                            break;
                         case sf::Keyboard::Z:
                             q = Pixel((unsigned int)(q)+256+256*256+256*256*256);
                             break;
                         case sf::Keyboard::C:
                             l.clear(p);
+                            break;
+                        case sf::Keyboard::L:
+                            l.drawLinesOutOfPoint(q, 400, 400, *currentBrush);
+                            break;
+                        case sf::Keyboard::M:
+                            l.drawLine(q, 400, 400, 800, 800, *currentBrush);
                             break;
                         default:
                             break;

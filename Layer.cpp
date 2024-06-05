@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Layer.h"
 
 sf::Uint8 *Layer::as_u8() {
@@ -103,11 +104,11 @@ void Layer::ring() {
 
 }
 
-sf::Sprite* Layer::as_Sprite() {
+std::unique_ptr<sf::Sprite> Layer::as_Sprite() {
 //    sf::Image image;
 //    image.create(800, 800, pixels);
     texture->update(pixels);
-    auto* sprite = new sf::Sprite(*texture);
+    auto sprite = std::make_unique<sf::Sprite>(sf::Sprite(*texture));
     return sprite;
 }
 
@@ -146,41 +147,54 @@ void Layer::bucket(const Pixel &p, int x, int y){
 }
 
 void Layer::drawLine(const Pixel &p, int x1, int y1, int x2, int y2, Brush &brush) {
+//    std::cout << "Drew line from (" << x1 << ", " << y1 << ") to (" << x2 << ", " << y2 << ").\n";
+
     // if the calculation of slope will result in a division by 0
     if (x1 == x2){
         for (int i = std::min(y1,y2); i <= std::max(y1,y2); i++){
-            drawWithBrush(p, x1, y1, brush);
+            drawWithBrush(p, x1, i, brush);
         }
         return;
     }
+    // find the slope required to draw the line
     double slope = (double)(y2 - y1) / (x2 - x1);
-    if (x2 < x1){
-        std::swap(x1, x2);
-        std::swap(y1,y2);
+    if (std::abs(slope) <= 1.0){
+        int xPos = x1 < x2 ? x1 : x2;
+        int xEnd = x1 < x2 ? x2 : x1;
+        double yPos = x1 < x2 ? y1 : y2;
 
-    }
-    double xPos = x1;
-    double yPos = y1;
-    // if the slope is normal-ish
-    if (std::abs(slope) < 2.0){
-        while (xPos < x2){
+        while (xPos < xEnd){
             xPos++;
             yPos += slope;
             drawWithBrush(p, (int)xPos, (int)yPos, brush);
         }
     }
+        // otherwise, treat y as the independent variable
     else {
         slope = 1.0/slope;
-        if (yPos > y2){
-            yPos = y2;
-            y2 = y1;
-        }
-        while (yPos < y2){
+//        if (yPos > y2){
+//            yPos = y2;
+//            y2 = y1;
+//        }
+        int yPos = y1 < y2 ? y1 : y2;
+        int yEnd = y1 < y2 ? y2 : y1;
+        double xPos = y1 < y2 ? x1 : x2;
+        while (yPos < yEnd){
             yPos += 1;
             xPos += slope;
             drawWithBrush(p, (int)xPos, (int)yPos, brush);
         }
     }
+    // if going backwards, start from the leftmost point
+//    if (x2 < x1){
+//        std::swap(x1, x2);
+//        std::swap(y1,y2);
+//    }
+//
+//    double xPos = x1;
+//    double yPos = y1;
+    // if the slope is less than or equal to one, treat x as the independent variable
+
 
 }
 
@@ -196,4 +210,22 @@ void Layer::clear(const Pixel &p) {
     delete texture;
     texture = new sf::Texture();
     texture->create(width, height);
+}
+
+Layer::~Layer() {
+    delete[] pixels;
+    delete texture;
+}
+
+void Layer::drawLinesOutOfPoint(const Pixel &p, int x, int y, Brush &brush) {
+    for (int xPos = 0; xPos <= width; xPos += 50){
+        drawLine(p, x, y, xPos, 0, brush);
+        drawLine(p, x, y, xPos, height, brush);
+    }
+    for (int yPos = 0; yPos <= height; yPos += 50){
+        drawLine(p, x, y, 0, yPos, brush);
+        drawLine(p, x, y, width, yPos, brush);
+    }
+
+
 }
