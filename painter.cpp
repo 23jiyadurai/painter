@@ -4,13 +4,17 @@
 #include <iostream>
 #include <chrono>
 
+int taxicabDistance(std::pair<int,int>, std::pair<int,int>);
+
 int main(){
-    auto window = new sf::RenderWindow(sf::VideoMode(800,800), "painter");
+    int WINDOW_WIDTH = 1200;
+    int WINDOW_HEIGHT = 800;
+    auto window = new sf::RenderWindow(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "painter");
     window->setVerticalSyncEnabled(true);
     Pixel p(0xFF, 0xFF, 0xFF, 255);
     Pixel transparent(0, 0, 0, 0);
-    Layer l(800, 800, transparent);
-    Layer l2(800, 800, p);
+    Layer l(WINDOW_WIDTH, WINDOW_HEIGHT, transparent);
+    Layer l2(WINDOW_WIDTH, WINDOW_HEIGHT, p);
     std::vector<Layer*> ls = {&l, &l2};
     Canvas canvas(ls);
 
@@ -70,7 +74,8 @@ int main(){
 //                    if (clicking) l.drawWithBrush(q, event.mouseMove.x, event.mouseMove.y, *currentBrush);
                     if (clicking) {
                         curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
-                        curLayer->drawLine(q, prevPrevPos.first, prevPrevPos.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
+                        if (taxicabDistance(prevPrevPos, {event.mouseMove.x, event.mouseMove.y}) < 20)
+                            curLayer->drawLine(q, prevPrevPos.first, prevPrevPos.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
                     }
                     prevPrevPos = previousPosition;
                     previousPosition = {event.mouseMove.x, event.mouseMove.y};
@@ -96,11 +101,11 @@ int main(){
                             curLayer->clear(transparent);
                             break;
                         case sf::Keyboard::L:
-                            curLayer->drawLinesOutOfPoint(q, 400, 400, *currentBrush);
+                            curLayer->drawLinesOutOfPoint(q, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, *currentBrush);
                             break;
-                        case sf::Keyboard::M:
-                            curLayer->drawLine(q, 400, 400, 800, 800, *currentBrush);
-                            break;
+//                        case sf::Keyboard::M:
+//                            curLayer->drawLine(q, WINDOW_WIDTH / 2, 400, 800, 800, *currentBrush);
+//                            break;
                         case sf::Keyboard::R:
                             q.red++;
                             break;
@@ -133,10 +138,11 @@ int main(){
             frames = 0;
             events = 0;
         }
-        rgbText.setPosition(800-rgbText.getLocalBounds().width, 0);
+        rgbText.setPosition(static_cast<float>(WINDOW_WIDTH) - rgbText.getLocalBounds().width, 0);
         rgbText.setString(std::format("0x{:x}", (unsigned int)q));
         eventsText.setString(std::format("{}", events));
-        eventsText.setPosition(800 - eventsText.getLocalBounds().width, 800 - eventsText.getLocalBounds().height);
+        eventsText.setPosition(static_cast<float>(WINDOW_WIDTH) - eventsText.getLocalBounds().width,
+                               static_cast<float>(WINDOW_HEIGHT) - eventsText.getLocalBounds().height);
 
         window->clear(sf::Color::White);
 //        window->draw(*lSprite);
@@ -151,4 +157,8 @@ int main(){
 //    std::cout << "Made " << frames << " frames in " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start) << " milliseconds." << std::endl;
 
 
+}
+
+int taxicabDistance(std::pair<int,int> a, std::pair<int,int> b){
+    return std::abs(a.first - b.first) + std::abs(a.second - b.second);
 }
