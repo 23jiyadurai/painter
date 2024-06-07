@@ -143,6 +143,7 @@ void Layer::bucket(const Pixel &p, int x, int y){
         pixels[offset+1] = p.green;
         pixels[offset+2] = p.blue;
         pixels[offset+3] = p.alpha;
+
     }
 }
 

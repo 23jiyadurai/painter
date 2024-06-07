@@ -6,6 +6,27 @@
 
 int taxicabDistance(std::pair<int,int>, std::pair<int,int>);
 
+enum class Tool { Line, Bucket, Brush, LinesOut };
+void useTool(Tool t, std::pair<int,int> prev, std::pair<int,int> cur, Layer& layer, Brush& brush, Pixel& p){
+    switch (t){
+        case Tool::Line:
+            if (prev.first < 0) break;
+            layer.drawLine(p, prev.first, prev.second, cur.first, cur.second, brush);
+            break;
+        case Tool::Bucket:
+            layer.bucket(p, cur.first, cur.second);
+            break;
+        case Tool::Brush:
+            layer.drawWithBrush(p, cur.first, cur.second, brush);
+            break;
+        case Tool::LinesOut:
+            layer.drawLinesOutOfPoint(p, cur.first, cur.second, brush);
+            break;
+        default:
+            break;
+    }
+}
+
 int main(){
     int WINDOW_WIDTH = 1200;
     int WINDOW_HEIGHT = 800;
@@ -51,6 +72,7 @@ int main(){
     Brush* currentBrush = &brush1;
     std::pair<int,int> previousPosition = {-1,-1};
     std::pair<int,int> prevPrevPos = {-1, -1};
+    Tool currentTool = Tool::Brush;
     while (window->isOpen()){
         auto curLayer = canvas.curLayer;
         sf::Event event{};
@@ -64,7 +86,10 @@ int main(){
                 case sf::Event::MouseButtonPressed:
                     clicking = true;
 //                    l.drawWithBrush(q, event.mouseButton.x, event.mouseButton.y, *currentBrush);
-                    curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseButton.x, event.mouseButton.y, *currentBrush);
+//                    curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseButton.x, event.mouseButton.y, *currentBrush);
+                    useTool(currentTool, previousPosition, {event.mouseButton.x, event.mouseButton.y}, *curLayer, *currentBrush, q);
+                    prevPrevPos = previousPosition;
+                    previousPosition = {event.mouseButton.x, event.mouseButton.y};
 //                    l.drawLinesOutOfPoint(q, event.mouseButton.x, event.mouseButton.y, *currentBrush);
                     break;
                 case sf::Event::MouseButtonReleased:
@@ -72,13 +97,19 @@ int main(){
                     break;
                 case sf::Event::MouseMoved:
 //                    if (clicking) l.drawWithBrush(q, event.mouseMove.x, event.mouseMove.y, *currentBrush);
-                    if (clicking) {
-                        curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
+                    if (clicking && currentTool == Tool::Brush) {
+//                        curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
+                        useTool(Tool::Line, previousPosition, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
+
                         if (taxicabDistance(prevPrevPos, {event.mouseMove.x, event.mouseMove.y}) < 20)
-                            curLayer->drawLine(q, prevPrevPos.first, prevPrevPos.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
+                            useTool(Tool::Line, prevPrevPos, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
+
+//                            curLayer->drawLine(q, prevPrevPos.first, prevPrevPos.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
                     }
-                    prevPrevPos = previousPosition;
-                    previousPosition = {event.mouseMove.x, event.mouseMove.y};
+                    if (currentTool == Tool::Brush){
+                        prevPrevPos = previousPosition;
+                        previousPosition = {event.mouseMove.x, event.mouseMove.y};
+                    }
                     break;
                 case sf::Event::KeyPressed:
                     switch(event.key.code){
@@ -101,7 +132,10 @@ int main(){
                             curLayer->clear(transparent);
                             break;
                         case sf::Keyboard::L:
-                            curLayer->drawLinesOutOfPoint(q, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, *currentBrush);
+//                            curLayer->drawLinesOutOfPoint(q, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, *currentBrush);
+                            currentTool = Tool::Line;
+                            previousPosition = {-1, -1};
+                            prevPrevPos = {-1, -1};
                             break;
 //                        case sf::Keyboard::M:
 //                            curLayer->drawLine(q, WINDOW_WIDTH / 2, 400, 800, 800, *currentBrush);
@@ -123,6 +157,9 @@ int main(){
                             break;
                         case sf::Keyboard::Down:
                             canvas.moveDownALayer();
+                            break;
+                        case sf::Keyboard::X:
+                            currentTool = Tool::LinesOut;
                             break;
                         default:
                             break;
