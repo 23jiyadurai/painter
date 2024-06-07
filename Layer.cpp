@@ -235,3 +235,11 @@ void Layer::draw(sf::RenderTarget &target, sf::RenderStates states) const {
     texture->update(pixels);
     target.draw(sf::Sprite(*texture));
 }
+
+void Layer::drawPolygon(Pixel &p, std::vector<std::pair<int, int>> &pastPositions, int x, int y, Brush &brush) {
+    for (int i = 0; i < pastPositions.size() - 1; i++){
+        drawLine(p, pastPositions[i].first, pastPositions[i].second, pastPositions[i+1].first, pastPositions[i+1].second, brush);
+    }
+    drawLine(p, pastPositions.back().first, pastPositions.back().second, x, y, brush);
+    drawLine(p, pastPositions.front().first, pastPositions.front().second, x, y, brush);
+}

@@ -35,4 +35,6 @@ public:
     void bucket(const Pixel &p, int x, int y);
 
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+
+    void drawPolygon(Pixel &pixel, std::vector<std::pair<int, int>> &vector, int i, int i1, Brush &brush);
 };

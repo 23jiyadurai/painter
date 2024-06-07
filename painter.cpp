@@ -6,12 +6,12 @@
 
 int taxicabDistance(std::pair<int,int>, std::pair<int,int>);
 
-enum class Tool { Line, Bucket, Brush, LinesOut };
-void useTool(Tool t, std::pair<int,int> prev, std::pair<int,int> cur, Layer& layer, Brush& brush, Pixel& p){
+enum class Tool { Line, Bucket, Brush, LinesOut, Triangle };
+void useTool(Tool t, std::vector<std::pair<int,int>>& pastPositions, std::pair<int,int> cur, Layer& layer, Brush& brush, Pixel& p){
     switch (t){
         case Tool::Line:
-            if (prev.first < 0) break;
-            layer.drawLine(p, prev.first, prev.second, cur.first, cur.second, brush);
+            if (pastPositions.empty()) break;
+            layer.drawLine(p, pastPositions[0].first, pastPositions[0].second, cur.first, cur.second, brush);
             break;
         case Tool::Bucket:
             layer.bucket(p, cur.first, cur.second);
@@ -21,6 +21,12 @@ void useTool(Tool t, std::pair<int,int> prev, std::pair<int,int> cur, Layer& lay
             break;
         case Tool::LinesOut:
             layer.drawLinesOutOfPoint(p, cur.first, cur.second, brush);
+            break;
+        case Tool::Triangle:
+            if (pastPositions.size() > 2){
+                layer.drawPolygon(p, pastPositions, cur.first, cur.second, brush);
+                pastPositions.clear();
+            }
             break;
         default:
             break;
@@ -70,8 +76,9 @@ int main(){
     auto brushes = {brush1, brush2, brush3};
     bool clicking = false;
     Brush* currentBrush = &brush1;
-    std::pair<int,int> previousPosition = {-1,-1};
-    std::pair<int,int> prevPrevPos = {-1, -1};
+//    std::pair<int,int> previousPosition = {-1,-1};
+//    std::pair<int,int> prevPrevPos = {-1, -1};
+    std::vector<std::pair<int,int>> pastPositions({{-1,-1}, {-1,-1}});
     Tool currentTool = Tool::Brush;
     while (window->isOpen()){
         auto curLayer = canvas.curLayer;
@@ -87,9 +94,11 @@ int main(){
                     clicking = true;
 //                    l.drawWithBrush(q, event.mouseButton.x, event.mouseButton.y, *currentBrush);
 //                    curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseButton.x, event.mouseButton.y, *currentBrush);
-                    useTool(currentTool, previousPosition, {event.mouseButton.x, event.mouseButton.y}, *curLayer, *currentBrush, q);
-                    prevPrevPos = previousPosition;
-                    previousPosition = {event.mouseButton.x, event.mouseButton.y};
+                    pastPositions.insert(pastPositions.begin(), {event.mouseButton.x, event.mouseButton.y});
+                    useTool(currentTool, pastPositions, {event.mouseButton.x, event.mouseButton.y}, *curLayer, *currentBrush, q);
+                    if (currentTool != Tool::Triangle && pastPositions.size() > 2) pastPositions.pop_back();
+                    //prevPrevPos = previousPosition;
+//                    previousPosition = {event.mouseButton.x, event.mouseButton.y};
 //                    l.drawLinesOutOfPoint(q, event.mouseButton.x, event.mouseButton.y, *currentBrush);
                     break;
                 case sf::Event::MouseButtonReleased:
@@ -99,16 +108,19 @@ int main(){
 //                    if (clicking) l.drawWithBrush(q, event.mouseMove.x, event.mouseMove.y, *currentBrush);
                     if (clicking && currentTool == Tool::Brush) {
 //                        curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
-                        useTool(Tool::Line, previousPosition, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
+                        useTool(Tool::Line, pastPositions, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
 
-                        if (taxicabDistance(prevPrevPos, {event.mouseMove.x, event.mouseMove.y}) < 20)
-                            useTool(Tool::Line, prevPrevPos, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
+                        if (taxicabDistance(pastPositions[1], {event.mouseMove.x, event.mouseMove.y}) < 20)
+                            useTool(Tool::Line, pastPositions, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
 
 //                            curLayer->drawLine(q, prevPrevPos.first, prevPrevPos.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
                     }
                     if (currentTool == Tool::Brush){
-                        prevPrevPos = previousPosition;
-                        previousPosition = {event.mouseMove.x, event.mouseMove.y};
+                        pastPositions.insert(pastPositions.begin(), {event.mouseMove.x, event.mouseMove.y});
+                        if (pastPositions.size() > 2) pastPositions.pop_back();
+
+//                        prevPrevPos = previousPosition;
+//                        previousPosition = {event.mouseMove.x, event.mouseMove.y};
                     }
                     break;
                 case sf::Event::KeyPressed:
@@ -134,8 +146,7 @@ int main(){
                         case sf::Keyboard::L:
 //                            curLayer->drawLinesOutOfPoint(q, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, *currentBrush);
                             currentTool = Tool::Line;
-                            previousPosition = {-1, -1};
-                            prevPrevPos = {-1, -1};
+                            pastPositions.clear();
                             break;
 //                        case sf::Keyboard::M:
 //                            curLayer->drawLine(q, WINDOW_WIDTH / 2, 400, 800, 800, *currentBrush);
@@ -160,6 +171,10 @@ int main(){
                             break;
                         case sf::Keyboard::X:
                             currentTool = Tool::LinesOut;
+                            break;
+                        case sf::Keyboard::P:
+                            currentTool = Tool::Triangle;
+                            pastPositions.clear();
                             break;
                         default:
                             break;
