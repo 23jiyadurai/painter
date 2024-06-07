@@ -8,7 +8,7 @@ struct Brush{
     std::vector<std::pair<int,int>> offsets;
     double r;
 };
-class Layer {
+class Layer : public sf::Drawable {
     unsigned int width;
     unsigned int height;
     sf::Uint8* pixels;
@@ -33,4 +33,6 @@ public:
     void drawLinesOutOfPoint(const Pixel &p, int x, int y, Brush &brush);
 
     void bucket(const Pixel &p, int x, int y);
+
+    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };

@@ -229,3 +229,8 @@ void Layer::drawLinesOutOfPoint(const Pixel &p, int x, int y, Brush &brush) {
 
 
 }
+
+void Layer::draw(sf::RenderTarget &target, sf::RenderStates states) const {
+    texture->update(pixels);
+    target.draw(sf::Sprite(*texture));
+}
