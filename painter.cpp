@@ -6,13 +6,20 @@
 
 int taxicabDistance(std::pair<int,int>, std::pair<int,int>);
 
-enum class Tool { Line, Bucket, Brush, LinesOut, Triangle };
+enum class Tool { Line, Bucket, Brush, LinesOut, Triangle, IntermediateLine, Polygon };
 void useTool(Tool t, std::vector<std::pair<int,int>>& pastPositions, std::pair<int,int> cur, Layer& layer, Brush& brush, Pixel& p){
     switch (t){
         case Tool::Line:
-            if (pastPositions.empty()) break;
-            layer.drawLine(p, pastPositions[0].first, pastPositions[0].second, cur.first, cur.second, brush);
+            if (pastPositions.size() < 2) break;
+            layer.drawLine(p, pastPositions[1].first, pastPositions[1].second, cur.first, cur.second, brush);
+            pastPositions.clear();
+//            if (pastPositions.size() > 1 && taxicabDistance(pastPositions[1], cur) < 20)
+//                layer.drawLine(p, pastPositions[1].first, pastPositions[1].second, cur.first, cur.second, brush);
             break;
+        case Tool::IntermediateLine:
+            if (pastPositions.size() < 2) break;
+            layer.drawLine(p, pastPositions[1].first, pastPositions[1].second, cur.first, cur.second, brush);
+//            layer.drawLine(p, pastPositions[2].first, pastPositions[2].second, cur.first, cur.second, brush);
         case Tool::Bucket:
             layer.bucket(p, cur.first, cur.second);
             break;
@@ -27,6 +34,11 @@ void useTool(Tool t, std::vector<std::pair<int,int>>& pastPositions, std::pair<i
                 layer.drawPolygon(p, pastPositions, cur.first, cur.second, brush);
                 pastPositions.clear();
             }
+            break;
+        case Tool::Polygon:
+            if (pastPositions.size() < 3) break;
+            if (!(cur.first == -1 && cur.second == -1)) break;
+            layer.drawPolygon(p, pastPositions, pastPositions[0].first, pastPositions[0].second, brush);
             break;
         default:
             break;
@@ -96,7 +108,7 @@ int main(){
 //                    curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseButton.x, event.mouseButton.y, *currentBrush);
                     pastPositions.insert(pastPositions.begin(), {event.mouseButton.x, event.mouseButton.y});
                     useTool(currentTool, pastPositions, {event.mouseButton.x, event.mouseButton.y}, *curLayer, *currentBrush, q);
-                    if (currentTool != Tool::Triangle && pastPositions.size() > 2) pastPositions.pop_back();
+                    if ((currentTool != Tool::Triangle && currentTool != Tool::Polygon) && pastPositions.size() > 2) pastPositions.pop_back();
                     //prevPrevPos = previousPosition;
 //                    previousPosition = {event.mouseButton.x, event.mouseButton.y};
 //                    l.drawLinesOutOfPoint(q, event.mouseButton.x, event.mouseButton.y, *currentBrush);
@@ -106,15 +118,6 @@ int main(){
                     break;
                 case sf::Event::MouseMoved:
 //                    if (clicking) l.drawWithBrush(q, event.mouseMove.x, event.mouseMove.y, *currentBrush);
-                    if (clicking && currentTool == Tool::Brush) {
-//                        curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
-                        useTool(Tool::Line, pastPositions, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
-
-                        if (taxicabDistance(pastPositions[1], {event.mouseMove.x, event.mouseMove.y}) < 20)
-                            useTool(Tool::Line, pastPositions, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
-
-//                            curLayer->drawLine(q, prevPrevPos.first, prevPrevPos.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
-                    }
                     if (currentTool == Tool::Brush){
                         pastPositions.insert(pastPositions.begin(), {event.mouseMove.x, event.mouseMove.y});
                         if (pastPositions.size() > 2) pastPositions.pop_back();
@@ -122,6 +125,16 @@ int main(){
 //                        prevPrevPos = previousPosition;
 //                        previousPosition = {event.mouseMove.x, event.mouseMove.y};
                     }
+                    if (clicking && currentTool == Tool::Brush) {
+//                        curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
+                        useTool(Tool::IntermediateLine, pastPositions, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
+
+//                        if (taxicabDistance(pastPositions[1], {event.mouseMove.x, event.mouseMove.y}) < 20)
+//                            useTool(Tool::Line, pastPositions, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
+
+//                            curLayer->drawLine(q, prevPrevPos.first, prevPrevPos.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
+                    }
+
                     break;
                 case sf::Event::KeyPressed:
                     switch(event.key.code){
@@ -172,8 +185,14 @@ int main(){
                         case sf::Keyboard::X:
                             currentTool = Tool::LinesOut;
                             break;
-                        case sf::Keyboard::P:
+                        case sf::Keyboard::T:
                             currentTool = Tool::Triangle;
+                            pastPositions.clear();
+                            break;
+                        case sf::Keyboard::P:
+                            if (currentTool == Tool::Polygon)
+                                useTool(currentTool, pastPositions, {-1,-1}, *curLayer, *currentBrush, q);
+                            currentTool = Tool::Polygon;
                             pastPositions.clear();
                             break;
                         default:
