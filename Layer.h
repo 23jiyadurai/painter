@@ -3,6 +3,8 @@
 #include <memory>
 #include <random>
 #include <numbers>
+#include <queue>
+#include <set>
 
 struct Brush{
     std::vector<std::pair<int,int>> offsets;

@@ -137,14 +137,28 @@ void Layer::drawWithBrush(const Pixel &p, int x, int y, Brush &brush){
 }
 
 void Layer::bucket(const Pixel &p, int x, int y){
-    if (x >= 0 && y >= 0 && x < width && y < height){
-        int offset = 4*((int)width*y+x);
-        pixels[offset] = p.red;
-        pixels[offset+1] = p.green;
-        pixels[offset+2] = p.blue;
-        pixels[offset+3] = p.alpha;
-
+    Pixel replacedColor(reinterpret_cast<int*>(pixels)[width*y + x]);
+    std::queue<std::pair<int,int>> q;
+    std::set<std::pair<int,int>> set;
+    q.emplace(x,y);
+    while (!q.empty()){
+        auto pair = q.front();
+        q.pop();
+        if (set.contains(pair)) continue;
+        set.insert(pair);
+        int offset = 4*((int)width*pair.second+pair.first);
+        if (pair.first >= 0 && pair.second >= 0 && pair.first < width && pair.second < height && Pixel(reinterpret_cast<int*>(pixels)[pair.second * width + pair.first]) == replacedColor){
+            pixels[offset] = p.red;
+            pixels[offset+1] = p.green;
+            pixels[offset+2] = p.blue;
+            pixels[offset+3] = p.alpha;
+            q.emplace(pair.first + 1, pair.second);
+            q.emplace(pair.first - 1, pair.second);
+            q.emplace(pair.first, pair.second + 1);
+            q.emplace(pair.first, pair.second - 1);
+        }
     }
+
 }
 
 void Layer::drawLine(const Pixel &p, int x1, int y1, int x2, int y2, Brush &brush) {

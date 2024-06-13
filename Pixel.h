@@ -16,6 +16,7 @@ public:
     Pixel(sf::Uint8 r, sf::Uint8 g, sf::Uint8 b, sf::Uint8 a);
     Pixel(const Pixel& other);
     Pixel operator+(const Pixel& other) const;
+    bool operator==(const Pixel& other) const;
     explicit Pixel(unsigned int i);
     explicit operator unsigned int() const;
 

@@ -45,5 +45,9 @@ Pixel::operator unsigned int() const {
     return res;
 }
 
+bool Pixel::operator==(const Pixel &other) const {
+    return red == other.red && green == other.green && blue == other.blue && alpha == other.alpha;
+}
+
 Pixel::Pixel(const Pixel &other) = default;
 

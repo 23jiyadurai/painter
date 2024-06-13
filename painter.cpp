@@ -20,6 +20,7 @@ void useTool(Tool t, std::vector<std::pair<int,int>>& pastPositions, std::pair<i
         case Tool::IntermediateLine:
             if (pastPositions.size() < 2) break;
             layer.drawLine(p, pastPositions[1].first, pastPositions[1].second, cur.first, cur.second, brush);
+            break;
 //            layer.drawLine(p, pastPositions[2].first, pastPositions[2].second, cur.first, cur.second, brush);
         case Tool::Bucket:
             layer.bucket(p, cur.first, cur.second);
@@ -204,6 +205,9 @@ int main(){
                                 useTool(currentTool, pastPositions, {-1,-1}, *curLayer, *currentBrush, q);
                             currentTool = Tool::Polygon;
                             pastPositions.clear();
+                            break;
+                        case sf::Keyboard::H:
+                            currentTool = Tool::Bucket;
                             break;
                         default:
                             break;
