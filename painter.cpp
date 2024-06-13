@@ -5,6 +5,7 @@
 #include <chrono>
 
 int taxicabDistance(std::pair<int,int>, std::pair<int,int>);
+std::pair<int,int> convertCoordinates(std::pair<int,int> coords, sf::Vector2<unsigned int> windowSize, int width, int height);
 
 enum class Tool { Line, Bucket, Brush, LinesOut, Triangle, IntermediateLine, Polygon };
 void useTool(Tool t, std::vector<std::pair<int,int>>& pastPositions, std::pair<int,int> cur, Layer& layer, Brush& brush, Pixel& p){
@@ -49,7 +50,8 @@ int main(){
     int WINDOW_WIDTH = 1200;
     int WINDOW_HEIGHT = 800;
     auto window = new sf::RenderWindow(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "painter");
-    window->setVerticalSyncEnabled(true);
+//    window->setVerticalSyncEnabled(true);
+    window->setFramerateLimit(60);
     Pixel p(0xFF, 0xFF, 0xFF, 255);
     Pixel transparent(0, 0, 0, 0);
     Layer l(WINDOW_WIDTH, WINDOW_HEIGHT, transparent);
@@ -92,6 +94,7 @@ int main(){
 //    std::pair<int,int> prevPrevPos = {-1, -1};
     std::vector<std::pair<int,int>> pastPositions({{-1,-1}, {-1,-1}});
     Tool currentTool = Tool::Brush;
+    sf::View view = window->getView();
     while (window->isOpen()){
         auto curLayer = canvas.curLayer;
         sf::Event event{};
@@ -102,12 +105,19 @@ int main(){
                 case sf::Event::Closed:
                     window->close();
                     break;
+                case sf::Event::Resized:
+                    std::cout << "hello\n";
+//                    view.setSize(static_cast<float>(event.size.width), static_cast<float>(event.size.height));
+//                    window->setView(view);
+                    break;
                 case sf::Event::MouseButtonPressed:
                     clicking = true;
 //                    l.drawWithBrush(q, event.mouseButton.x, event.mouseButton.y, *currentBrush);
 //                    curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseButton.x, event.mouseButton.y, *currentBrush);
-                    pastPositions.insert(pastPositions.begin(), {event.mouseButton.x, event.mouseButton.y});
-                    useTool(currentTool, pastPositions, {event.mouseButton.x, event.mouseButton.y}, *curLayer, *currentBrush, q);
+
+                    std::cout << "(" <<event.mouseButton.x << ", " << event.mouseButton.y << ")\n";
+                    pastPositions.insert(pastPositions.begin(), convertCoordinates({event.mouseButton.x, event.mouseButton.y}, window->getSize(), WINDOW_WIDTH, WINDOW_HEIGHT));
+                    useTool(currentTool, pastPositions, convertCoordinates({event.mouseButton.x, event.mouseButton.y}, window->getSize(), WINDOW_WIDTH, WINDOW_HEIGHT), *curLayer, *currentBrush, q);
                     if ((currentTool != Tool::Triangle && currentTool != Tool::Polygon) && pastPositions.size() > 2) pastPositions.pop_back();
                     //prevPrevPos = previousPosition;
 //                    previousPosition = {event.mouseButton.x, event.mouseButton.y};
@@ -119,7 +129,7 @@ int main(){
                 case sf::Event::MouseMoved:
 //                    if (clicking) l.drawWithBrush(q, event.mouseMove.x, event.mouseMove.y, *currentBrush);
                     if (currentTool == Tool::Brush){
-                        pastPositions.insert(pastPositions.begin(), {event.mouseMove.x, event.mouseMove.y});
+                        pastPositions.insert(pastPositions.begin(), convertCoordinates({event.mouseMove.x, event.mouseMove.y}, window->getSize(), WINDOW_WIDTH, WINDOW_HEIGHT));
                         if (pastPositions.size() > 2) pastPositions.pop_back();
 
 //                        prevPrevPos = previousPosition;
@@ -127,7 +137,7 @@ int main(){
                     }
                     if (clicking && currentTool == Tool::Brush) {
 //                        curLayer->drawLine(q, previousPosition.first, previousPosition.second, event.mouseMove.x, event.mouseMove.y, *currentBrush);
-                        useTool(Tool::IntermediateLine, pastPositions, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
+                        useTool(Tool::IntermediateLine, pastPositions, convertCoordinates({event.mouseMove.x, event.mouseMove.y}, window->getSize(), WINDOW_WIDTH, WINDOW_HEIGHT), *curLayer, *currentBrush, q);
 
 //                        if (taxicabDistance(pastPositions[1], {event.mouseMove.x, event.mouseMove.y}) < 20)
 //                            useTool(Tool::Line, pastPositions, {event.mouseMove.x, event.mouseMove.y}, *curLayer, *currentBrush, q);
@@ -232,4 +242,10 @@ int main(){
 
 int taxicabDistance(std::pair<int,int> a, std::pair<int,int> b){
     return std::abs(a.first - b.first) + std::abs(a.second - b.second);
+}
+
+std::pair<int,int> convertCoordinates(std::pair<int,int> coords, sf::Vector2<unsigned int> windowSize, int width, int height){
+    float newX = (float)coords.first / (float)windowSize.x * (float)width;
+    float newY = (float)coords.second / (float)windowSize.y * (float)height;
+    return {newX, newY};
 }
