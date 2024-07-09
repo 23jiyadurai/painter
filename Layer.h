@@ -15,6 +15,7 @@ class Layer : public sf::Drawable {
     unsigned int height;
     sf::Uint8* pixels;
     sf::Texture* texture;
+    std::vector<std::vector<std::pair<int,int>>> undos;
 public:
     Layer();
     Layer(unsigned int w, unsigned int h);

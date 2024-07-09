@@ -64,6 +64,7 @@ int main(){
     Canvas canvas(ls);
 
     Pixel q(0x000000ff);
+
 //    l.applyVerticalGradient(q);
 //    l.randomize();
 //    sf::Image image;

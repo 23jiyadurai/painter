@@ -138,16 +138,17 @@ void Layer::drawWithBrush(const Pixel &p, int x, int y, Brush &brush){
 }
 
 void Layer::bucket(const Pixel &p, int x, int y){
-    Pixel replacedColor(reinterpret_cast<int*>(pixels)[width*y + x]);
+    int position = y*(int)width + x;
+    Pixel replacedColor(pixels[position*4], pixels[position*4+1], pixels[position*4+2], pixels[position*4+3]);
     std::cout << (int)replacedColor.red << " " << (int)replacedColor.green << " " << (int)replacedColor.blue << " " << (int)replacedColor.alpha << "\n";
     std::cout << (int)p.red << " " << (int)p.green << " " << (int)p.blue << " " << (int)p.alpha << "\n";
 //    std::cout << *(unsigned int*)&replacedColor << " " << *(unsigned int*)&p << "\n";
     if (replacedColor == p) return;
     std::queue<int> q;
     std::unordered_set<int> set;
-    q.emplace(y*width + x);
+    q.emplace(position);
     while (!q.empty()){
-        int position = q.front();
+        position = q.front();
         q.pop();
         if (set.contains(position)) continue;
         set.insert(position);
