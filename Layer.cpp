@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unordered_set>
 #include "Layer.h"
 
 sf::Uint8 *Layer::as_u8() {
@@ -138,24 +139,28 @@ void Layer::drawWithBrush(const Pixel &p, int x, int y, Brush &brush){
 
 void Layer::bucket(const Pixel &p, int x, int y){
     Pixel replacedColor(reinterpret_cast<int*>(pixels)[width*y + x]);
-    std::queue<std::pair<int,int>> q;
-    std::set<std::pair<int,int>> set;
-    q.emplace(x,y);
+    std::cout << (int)replacedColor.red << " " << (int)replacedColor.green << " " << (int)replacedColor.blue << " " << (int)replacedColor.alpha << "\n";
+    std::cout << (int)p.red << " " << (int)p.green << " " << (int)p.blue << " " << (int)p.alpha << "\n";
+//    std::cout << *(unsigned int*)&replacedColor << " " << *(unsigned int*)&p << "\n";
+    if (replacedColor == p) return;
+    std::queue<int> q;
+    std::unordered_set<int> set;
+    q.emplace(y*width + x);
     while (!q.empty()){
-        auto pair = q.front();
+        int position = q.front();
         q.pop();
-        if (set.contains(pair)) continue;
-        set.insert(pair);
-        int offset = 4*((int)width*pair.second+pair.first);
-        if (pair.first >= 0 && pair.second >= 0 && pair.first < width && pair.second < height && Pixel(reinterpret_cast<int*>(pixels)[pair.second * width + pair.first]) == replacedColor){
+        if (set.contains(position)) continue;
+        set.insert(position);
+        int offset = position * 4;
+        if (position > 0  && position < width*height && Pixel(reinterpret_cast<int*>(pixels)[position]) == replacedColor){
             pixels[offset] = p.red;
             pixels[offset+1] = p.green;
             pixels[offset+2] = p.blue;
             pixels[offset+3] = p.alpha;
-            q.emplace(pair.first + 1, pair.second);
-            q.emplace(pair.first - 1, pair.second);
-            q.emplace(pair.first, pair.second + 1);
-            q.emplace(pair.first, pair.second - 1);
+            q.emplace(position + 1);
+            q.emplace(position - 1);
+            q.emplace(position + width);
+            q.emplace(position - width);
         }
     }
 

@@ -9,6 +9,7 @@ std::pair<int,int> convertCoordinates(std::pair<int,int> coords, sf::Vector2<uns
 
 enum class Tool { Line, Bucket, Brush, LinesOut, Triangle, IntermediateLine, Polygon };
 void useTool(Tool t, std::vector<std::pair<int,int>>& pastPositions, std::pair<int,int> cur, Layer& layer, Brush& brush, Pixel& p){
+    auto s = std::chrono::system_clock::now();
     switch (t){
         case Tool::Line:
             if (pastPositions.size() < 2) break;
@@ -18,12 +19,14 @@ void useTool(Tool t, std::vector<std::pair<int,int>>& pastPositions, std::pair<i
 //                layer.drawLine(p, pastPositions[1].first, pastPositions[1].second, cur.first, cur.second, brush);
             break;
         case Tool::IntermediateLine:
-            if (pastPositions.size() < 2) break;
+            if (pastPositions.size() < 3) break;
             layer.drawLine(p, pastPositions[1].first, pastPositions[1].second, cur.first, cur.second, brush);
+            if (taxicabDistance(pastPositions[2], cur) < 20)
+                layer.drawLine(p, pastPositions[2].first, pastPositions[2].second, cur.first, cur.second, brush);
             break;
-//            layer.drawLine(p, pastPositions[2].first, pastPositions[2].second, cur.first, cur.second, brush);
         case Tool::Bucket:
             layer.bucket(p, cur.first, cur.second);
+            std::cout << "Bucket took " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - s) << "\n";
             break;
         case Tool::Brush:
             layer.drawWithBrush(p, cur.first, cur.second, brush);
@@ -51,8 +54,8 @@ int main(){
     int WINDOW_WIDTH = 1200;
     int WINDOW_HEIGHT = 800;
     auto window = new sf::RenderWindow(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "painter");
-//    window->setVerticalSyncEnabled(true);
-    window->setFramerateLimit(60);
+    window->setVerticalSyncEnabled(true);
+//    window->setFramerateLimit(60);
     Pixel p(0xFF, 0xFF, 0xFF, 255);
     Pixel transparent(0, 0, 0, 0);
     Layer l(WINDOW_WIDTH, WINDOW_HEIGHT, transparent);
@@ -119,7 +122,7 @@ int main(){
                     std::cout << "(" <<event.mouseButton.x << ", " << event.mouseButton.y << ")\n";
                     pastPositions.insert(pastPositions.begin(), convertCoordinates({event.mouseButton.x, event.mouseButton.y}, window->getSize(), WINDOW_WIDTH, WINDOW_HEIGHT));
                     useTool(currentTool, pastPositions, convertCoordinates({event.mouseButton.x, event.mouseButton.y}, window->getSize(), WINDOW_WIDTH, WINDOW_HEIGHT), *curLayer, *currentBrush, q);
-                    if ((currentTool != Tool::Triangle && currentTool != Tool::Polygon) && pastPositions.size() > 2) pastPositions.pop_back();
+                    if ((currentTool != Tool::Triangle && currentTool != Tool::Polygon) && pastPositions.size() > 3) pastPositions.pop_back();
                     //prevPrevPos = previousPosition;
 //                    previousPosition = {event.mouseButton.x, event.mouseButton.y};
 //                    l.drawLinesOutOfPoint(q, event.mouseButton.x, event.mouseButton.y, *currentBrush);
@@ -131,7 +134,7 @@ int main(){
 //                    if (clicking) l.drawWithBrush(q, event.mouseMove.x, event.mouseMove.y, *currentBrush);
                     if (currentTool == Tool::Brush){
                         pastPositions.insert(pastPositions.begin(), convertCoordinates({event.mouseMove.x, event.mouseMove.y}, window->getSize(), WINDOW_WIDTH, WINDOW_HEIGHT));
-                        if (pastPositions.size() > 2) pastPositions.pop_back();
+                        if (pastPositions.size() > 3) pastPositions.pop_back();
 
 //                        prevPrevPos = previousPosition;
 //                        previousPosition = {event.mouseMove.x, event.mouseMove.y};
@@ -208,6 +211,9 @@ int main(){
                             break;
                         case sf::Keyboard::H:
                             currentTool = Tool::Bucket;
+                            break;
+                        case sf::Keyboard::D:
+                            currentTool = Tool::Brush;
                             break;
                         default:
                             break;
